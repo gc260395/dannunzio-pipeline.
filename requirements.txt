@@ -1,0 +1,15 @@
+# pairing.py
+beautifulsoup4==4.12.3
+lxml==5.1.0
+numpy==1.24.4
+pandas==2.2.0
+scipy==1.12.0
+sentence-transformers==5.4.1
+torch==2.5.1
+transformers==4.57.6
+
+# analysis.ipynb
+jupyter==1.0.0
+matplotlib==3.8.2
+seaborn==0.13.2
+japanize-matplotlib==1.1.3

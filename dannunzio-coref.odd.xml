@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TEI xmlns="http://www.tei-c.org/ns/1.0"
+     xmlns:sch="http://purl.oclc.org/dsdl/schematron"
+     xml:lang="en" version="4.12.0" xml:id="dannunzio-coref-odd">
+  <teiHeader>
+    <fileDesc>
+      <titleStmt>
+        <title>Customization for the annotation of coreference and zero anaphora in a parallel Italian-Japanese corpus</title>
+        <author>
+          <persName xml:id="GC">Gabriele Camilleri</persName>
+        </author>
+      </titleStmt>
+      <editionStmt>
+        <edition n="0.2">Version 0.2<date when="2026-08-28"/></edition>
+      </editionStmt>
+      <publicationStmt>
+        <distributor>Osaka University</distributor>
+        <authority>Gabriele Camilleri</authority>
+        <date when="2026"/>
+        <idno type="local">dannunzio-coref-odd</idno>
+        <availability status="restricted">
+          <licence target="https://creativecommons.org/licenses/by-nc-sa/4.0/">
+            <p>Released under CC BY-NC-SA 4.0.</p>
+          </licence>
+        </availability>
+      </publicationStmt>
+      <sourceDesc>
+        <p>Written for this project; derived from TEI P5 version 4.12.0.</p>
+      </sourceDesc>
+    </fileDesc>
+    <revisionDesc status="draft">
+      <change when="2026-08-28" who="#GC">First version.</change>
+    </revisionDesc>
+  </teiHeader>
+
+  <text>
+    <body>
+      <div>
+        <head>Scope and rationale</head>
+
+        <p>This customization governs every file in the corpus: the Italian source
+          text of <title level="m">Il trionfo della morte</title> (1894), the eight
+          Japanese translations, and the eight stand-off alignment files. All files
+          use the same annotation scheme.</p>
+
+        <p>The customization consists of a single extension: two attributes,
+          <att>pos</att> and <att>case</att>, are added to <gi>rs</gi>. Everything
+          else in the corpus uses TEI P5 as published. 
+          Both attributes are given closed value lists so that annotation errors are caught by validation.</p>
+
+        <p>A fully conformant alternative exists: <att>ana</att> could point at
+          <gi>interp</gi> elements declared in <gi>encodingDesc</gi> or in a
+          <gi>standOff</gi>. That route was not taken because the analysis reads these two properties 
+          on every one of the 5,134 annotated referring expressions in the corpus, and a pointer
+          indirection on each would obscure the markup without adding descriptive
+          power. The cost of the choice is that corpus files are valid against this
+          schema rather than against <ident type="schema">tei_all</ident>, which is
+          why the schema is referenced from <gi>schemaRef</gi> in every file.</p>
+
+        <schemaSpec ident="dannunzio-coref" start="TEI teiCorpus">
+          <desc>TEI P5 with two added attributes on <gi>rs</gi> for the annotation
+            of referential form and syntactic function.</desc>
+
+          <moduleRef key="tei"/>
+          <moduleRef key="header"/>
+          <moduleRef key="core"/>
+          <moduleRef key="textstructure"/>
+          <moduleRef key="linking"/>
+          <moduleRef key="namesdates"/>
+          <moduleRef key="analysis"/>
+          <moduleRef key="tagdocs"/>
+          <moduleRef key="corpus"/>
+
+
+          <elementSpec ident="rs" module="core" mode="change">
+
+            <constraintSpec ident="rs-ref-resolves" scheme="schematron" mode="add">
+              <desc>Every pointer in <att>ref</att> must resolve to a
+                <gi>person</gi> or <gi>personGrp</gi> declared in the same
+                document.</desc>
+              <constraint>
+                <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+                <sch:rule context="tei:rs">
+                  <sch:assert test="every $p in tokenize(normalize-space(@ref), '\s+')
+                    satisfies (starts-with($p, '#')
+                    and exists(//tei:person[@xml:id = substring($p, 2)]
+                             | //tei:personGrp[@xml:id = substring($p, 2)]))">
+                    Every value of @ref must be a '#' pointer resolving to a
+                    person or personGrp in this document. 
+                    Multiple referents are expressed as space-separated pointers.
+                  </sch:assert>
+                </sch:rule>
+              </constraint>
+            </constraintSpec>
+
+            <constraintSpec ident="rs-null-is-subject" scheme="schematron" mode="add">
+              <desc>Zero arguments are annotated only in subject function.</desc>
+              <constraint>
+                <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+                <sch:rule context="tei:rs[@pos = 'NULL']">
+                  <sch:assert test="@case = 'nsubj'">
+                    pos="NULL" is annotated only for zero subjects, so @case must be 'nsubj'.
+                  </sch:assert>
+                </sch:rule>
+              </constraint>
+            </constraintSpec>
+
+            <constraintSpec ident="rs-reflexive-is-object" scheme="schematron" mode="add">
+              <desc>Reflexive and clitic pronouns occur only in object function.</desc>
+              <constraint>
+                <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+                <sch:rule context="tei:rs[@pos = 'PRON-REFLEX']">
+                  <sch:assert test="@case = 'obj'">
+                    pos="PRON-REFLEX" occurs only in object function, so @case must be 'obj'.
+                  </sch:assert>
+                </sch:rule>
+              </constraint>
+            </constraintSpec>
+
+            <attList>
+
+              <attDef ident="pos" mode="add" usage="req">
+                <gloss>referential form</gloss>
+                <desc>records the form in which the referent is realized. The value
+                  set is deliberately coarser than a part-of-speech tagset: it
+                  distinguishes the referential strategies that the analysis
+                  compares, not the strict morphosyntactic categories of the two languages.</desc>
+                <datatype>
+                  <dataRef key="teidata.enumerated"/>
+                </datatype>
+                <valList type="closed">
+
+                  <valItem ident="PROPN">
+                    <gloss>proper noun</gloss>
+                    <desc>The referent is named: a personal name or a proper-noun phrase.</desc>
+                  </valItem>
+
+                  <valItem ident="NOUN">
+                    <gloss>common noun</gloss>
+                    <desc>The referent is realized by a common noun or noun phrase, including definite descriptions and epithets.</desc>
+                  </valItem>
+
+                  <valItem ident="PRON">
+                    <gloss>pronoun</gloss>
+                    <desc>The referent is realized by a clitic (excluding reflexives), personal or indefinite pronoun in Italian,
+                    or by a personal pronoun in Japanese.</desc>
+                  </valItem>
+
+                  <valItem ident="PRON-REFLEX">
+                    <gloss>reflexive pronoun</gloss>
+                    <desc>The referent is realized by a reflexive pronoun. Occurs in the Italian source only.</desc>
+                  </valItem>
+
+                  <valItem ident="DET">
+                    <gloss>determiner</gloss>
+                    <desc>The referent is realized by a determiner. In
+                      Universal Dependencies, Italian possessives are attached as
+                      <val>det:poss</val>; here they are recorded as
+                      <ident type="val">DET</ident> with <att>case</att>=<val>nmod</val>. 
+                      For Japaese, this tag applies to a small set of adnominals:
+                      この, こんな, あの, あんな, その, そんな. </desc>
+                  </valItem>
+
+                  <valItem ident="NULL">
+                    <gloss>zero argument</gloss>
+                    <desc>The referent is not overtly expressed. See the remarks on
+                      the anchoring of zero arguments below.</desc>
+                  </valItem>
+
+                </valList>
+              </attDef>
+
+              <attDef ident="case" mode="add" usage="req">
+                <gloss>syntactic function</gloss>
+                <desc>records the syntactic function of the referring expression
+                  within its clause. The values are inspired by Universal
+                  Dependencies relation labels but the set is not UD-conformant:
+                  <ident type="val">pred</ident> has no UD counterpart, and
+                  <ident type="val">nmod</ident> is applied more broadly than in UD
+                  Italian. The attribute labels grammatical function, not
+                  morphological case; neither Italian nor Japanese has a
+                  morphological vocative or predicative case, and no such claim is
+                  made. The name is retained from the first version of the scheme
+                  for continuity with previously published counts.</desc>
+                <datatype>
+                  <dataRef key="teidata.enumerated"/>
+                </datatype>
+                <valList type="closed">
+
+                  <valItem ident="nsubj">
+                    <gloss>subject</gloss>
+                    <desc>Subject of a finite predicate, whether overt or zero. In
+                      Japanese this includes the subjects of adjectival predicates
+                      and of passive constructions.</desc>
+                  </valItem>
+
+                  <valItem ident="obj">
+                    <gloss>object</gloss>
+                    <desc>Direct or indirect object, and the complement of a
+                      preposition or postposition.</desc>
+                  </valItem>
+
+                  <valItem ident="nmod">
+                    <gloss>nominal modifier</gloss>
+                    <desc>The referent modifies another nominal: genitives,
+                      possessive constructions and adnominal modifiers. 
+                      Applied more broadly than UD <val>nmod</val>.</desc>
+                  </valItem>
+
+                  <valItem ident="pred">
+                    <gloss>predicative complement</gloss>
+                    <desc>The referent is the predicate nominal of a copular
+                      clause. The value is a documented addition to the UD-inspired set, 
+                      retained because the analysis needs to distinguish predicative from
+                      argumental mentions.</desc>
+                  </valItem>
+
+                  <valItem ident="vocative">
+                    <gloss>vocative</gloss>
+                    <desc>The referent is addressed directly.</desc>
+                  </valItem>
+
+                </valList>
+              </attDef>
+
+            </attList>
+
+            <exemplum xml:lang="en">
+              <p>An overt subject and a zero subject in the same Italian sentence,
+                both referring to the same participant:</p>
+              <egXML xmlns="http://www.tei-c.org/ns/Examples">
+                <s xml:id="dn_1">
+                  <rs ref="#Giorgio" pos="PROPN" case="nsubj">Giorgio</rs>
+                  si voltò e
+                  <rs ref="#Giorgio" pos="NULL" case="nsubj">vide</rs>
+                  la donna.
+                </s>
+              </egXML>
+              <p>The corresponding Japanese, where the subject is zero in both
+                clauses:</p>
+              <egXML xmlns="http://www.tei-c.org/ns/Examples">
+                <s xml:id="isk_1">
+                  <rs ref="#Giorgio" pos="PROPN" case="nsubj">ジョルジォ</rs>
+                  は振り返って
+                  <rs ref="#Giorgio" pos="NULL" case="nsubj">見た</rs>
+                  。
+                </s>
+              </egXML>
+              <p>A plural referent, expressed as two pointers rather than as a
+                single composite identifier:</p>
+              <egXML xmlns="http://www.tei-c.org/ns/Examples">
+                <rs ref="#Giorgio #Ippolita" pos="PRON" case="nsubj">Noi</rs>
+              </egXML>
+            </exemplum>
+
+            <remarks mode="add" xml:lang="en">
+              <p>Anchoring of zero arguments. A zero subject has no textual extent,
+                so it cannot be marked by enclosing the string that expresses it.
+                Two encodings were available: an empty <gi>rs</gi> placed at the
+                position where the subject would stand, or an <gi>rs</gi> enclosing
+                the predicate whose agreement morphology identifies the referent.
+                This project uses the second. An empty element has no anchor in the
+                token stream, which makes it invisible to the alignment procedure; 
+                enclosing the predicate gives every annotated mention a position in the text 
+                that survives both. The predicate is thus the locus of the annotation: 
+                <gi>rs</gi> with <att>pos</att>=<val>NULL</val> asserts that an unexpressed 
+                argument of the enclosed predicate refers to the entity named in
+                <att>ref</att>, and the enclosed string is a verb, not a referring
+                expression. In Italian the predicate is always a finite verb. In
+                Japanese it may also be an adjectival predicate or a copular
+                phrase.</p>
+              <p>Scope. Only zero subjects are annotated. the constraint
+                <ident type="constraint">rs-null-is-subject</ident> enforces this
+                scope decision. It records a decision about coverage, not a claim
+                about the languages, and would need to be relaxed if object drop
+                were brought into the annotation.</p>
+              <p>Multiple referents. Where a mention refers to more than one
+                participant, <att>ref</att> carries several space-separated pointers.</p>
+            </remarks>
+
+          </elementSpec>
+
+          <elementSpec ident="said" module="core" mode="change">
+            <constraintSpec ident="said-who-resolves" scheme="schematron" mode="add">
+              <desc>Speaker and addressee must be given as resolvable pointers.</desc>
+              <constraint>
+                <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+                <sch:rule context="tei:said/@who | tei:said/@toWhom
+                                 | tei:q/@who   | tei:q/@toWhom">
+                  <sch:assert test="every $p in tokenize(normalize-space(.), '\s+')
+                    satisfies (starts-with($p, '#')
+                    and exists(//tei:person[@xml:id = substring($p, 2)]
+                             | //tei:personGrp[@xml:id = substring($p, 2)]))">
+                    @who and @toWhom take '#' pointers to person or personGrp entries. 
+                    Several addressees are given as space-separated pointers.
+                  </sch:assert>
+                </sch:rule>
+              </constraint>
+            </constraintSpec>
+            <remarks mode="add" xml:lang="en">
+              <p>Letters quoted within the narrative are encoded as <gi>q</gi> with
+                <att>type</att>=<val>written</val>. <gi>floatingText</gi> would be the closer
+                structural match for the longer letters, which have their own
+                closing salutations, but it would nest a complete
+                <gi>text</gi> inside the paragraph stream and interrupt the
+                sequence of <gi>s</gi> elements on which the alignment
+                depends.</p>
+            </remarks>
+          </elementSpec>
+
+          <elementSpec ident="link" module="linking" mode="change">
+            <constraintSpec ident="link-target-well-formed" scheme="schematron" mode="add">
+              <desc>Alignment pointers must name an s-unit in one of the aligned documents.</desc>
+              <constraint>
+                <sch:ns prefix="tei" uri="http://www.tei-c.org/ns/1.0"/>
+                <sch:rule context="tei:standOff//tei:link">
+                  <sch:assert test="every $p in tokenize(normalize-space(@target), '\s+')
+                    satisfies matches($p, '#[A-Za-z][\w.-]*_\d+$')">
+                    Every pointer in @target must end in a fragment identifier of the form prefix_N naming an s-unit.
+                  </sch:assert>
+                </sch:rule>
+              </constraint>
+            </constraintSpec>
+            <remarks mode="add" xml:lang="en">
+              <p>Each witness uses its own s-unit identifier prefix, so the two
+                sides of a link are distinguishable from the fragment identifier
+                alone and s-unit identifiers are unique across the corpus.
+                Correspondences are n:m. Only realized correspondences are
+                recorded: sentences with no counterpart are omitted rather than
+                linked to an empty pointer.</p>
+            </remarks>
+          </elementSpec>
+
+        </schemaSpec>
+      </div>
+    </body>
+  </text>
+</TEI>
