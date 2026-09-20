@@ -93,4 +93,6 @@ The Italian source text is in the public domain. The underlying Japanese transla
 
 ## Citation
 
-See `CITATION.cff`.
+```
+Camilleri, G. (2026). Referring Expressions Pairing Algorithm for Translation Comparison of Eight Japanese Translations of D'Annunzio's The Triumph of Death (Version v0.2) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.22857804
+```
